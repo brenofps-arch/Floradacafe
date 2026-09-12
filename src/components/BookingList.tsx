@@ -91,9 +91,7 @@ export function BookingList({
             const entradaEsperada = booking.valor_pessoas / 2
             const naoCompareceram = totalNaoCompareceram(booking)
             const status = pagoTotal
-              ? naoCompareceram > 0
-                ? { label: 'Fechado', classes: 'bg-field-100 text-field-700' }
-                : { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
+              ? { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
               : booking.valor_pago <= 0.009
                 ? { label: 'Entrada não paga', classes: 'bg-red-100 text-red-700' }
                 : booking.valor_pago < entradaEsperada - 0.009
@@ -140,7 +138,8 @@ export function BookingList({
                       {booking.qtd_adultos_nao_compareceram > 0 && <span>{booking.qtd_adultos_nao_compareceram} adulto(s)</span>}
                       {booking.qtd_adultos_nao_compareceram > 0 && booking.qtd_criancas_nao_compareceram > 0 && <span> · </span>}
                       {booking.qtd_criancas_nao_compareceram > 0 && <span>{booking.qtd_criancas_nao_compareceram} criança(s)</span>}
-                      {' '}não veio
+                      {' '}
+                      {naoCompareceram > 1 ? 'não vieram' : 'não veio'}
                     </div>
                   )}
                 </td>
