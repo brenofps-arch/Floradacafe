@@ -433,7 +433,7 @@ function Dashboard() {
                   onToggleSort={() => setSortAlpha((v) => !v)}
                 />
               </div>
-            ) : (
+            ) : search ? (
               <BookingList
                 bookings={filtered}
                 itemsTotalByBooking={itemsTotalByBooking}
@@ -445,6 +445,10 @@ function Dashboard() {
                 sortAlpha={sortAlpha}
                 onToggleSort={() => setSortAlpha((v) => !v)}
               />
+            ) : (
+              <p className="py-10 text-center text-sm text-earth-500">
+                Selecione um dia no calendário acima para ver os agendamentos, ou busque por nome/telefone.
+              </p>
             )}
           </>
         ) : (
