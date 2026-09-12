@@ -326,7 +326,7 @@ function Dashboard() {
       <header className="border-b border-sun-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🌻</span>
+            <img src="/florada-logo.jpg" alt="Florada Café" className="h-10 w-10 rounded-full object-cover" />
             <h1 className="font-script text-2xl text-earth-900">Florada Café</h1>
           </div>
           <div className="flex items-center gap-3 text-sm text-earth-500">

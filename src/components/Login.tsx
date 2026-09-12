@@ -27,8 +27,7 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-sun-100 via-sun-50 to-field-50 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-sun-200 bg-white p-8 shadow-sm">
-        <p className="mb-1 text-center text-4xl">🌻</p>
-        <h1 className="mb-1 text-center font-script text-4xl text-earth-900">Florada Café</h1>
+        <img src="/florada-logo.jpg" alt="Florada Café" className="mx-auto mb-3 h-24 w-24 rounded-full object-cover" />
         <p className="mb-6 text-center text-sm text-earth-500">Agendamentos e faturamento do café rural</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
