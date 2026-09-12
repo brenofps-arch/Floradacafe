@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-script: 'Dancing Script', cursive;
+  --font-sans: 'Nunito Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  --color-sun-50: #fefbf0;
+  --color-sun-100: #fdf1cf;
+  --color-sun-200: #fadf94;
+  --color-sun-300: #f6c85c;
+  --color-sun-400: #f0ab2e;
+  --color-sun-500: #e2911a;
+  --color-sun-600: #c17512;
+  --color-sun-700: #985a11;
+  --color-sun-800: #744515;
+  --color-sun-900: #593615;
+
+  --color-field-50: #f6f8ee;
+  --color-field-100: #e9efd6;
+  --color-field-600: #6b7f3a;
+  --color-field-700: #55632e;
+
+  --color-earth-50: #faf7f2;
+  --color-earth-100: #f1e9dc;
+  --color-earth-200: #e2d3b8;
+  --color-earth-300: #cbb287;
+  --color-earth-600: #7a5c3a;
+  --color-earth-700: #5f452c;
+  --color-earth-800: #453121;
+  --color-earth-900: #2f2013;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: linear-gradient(180deg, #fdf6e3 0%, #f6efd9 100%);
+  color: var(--color-earth-900);
+}
