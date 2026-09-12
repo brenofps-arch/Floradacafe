@@ -30,6 +30,8 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
   const [qtdAdultos, setQtdAdultos] = useState('1')
   const [qtdCriancas, setQtdCriancas] = useState('0')
   const [qtdGratuitos, setQtdGratuitos] = useState('0')
+  const [qtdPessoasExtra, setQtdPessoasExtra] = useState('1')
+  const [valorManual, setValorManual] = useState('')
   const [valorPago, setValorPago] = useState('')
   const [formaPagamentoEntrada, setFormaPagamentoEntrada] = useState<FormaPagamento>('pix')
   const [pagante, setPagante] = useState('')
@@ -49,11 +51,12 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
   const adultos = Number(qtdAdultos) || 0
   const criancas = Number(qtdCriancas) || 0
   const gratuitos = Number(qtdGratuitos) || 0
-  const totalPessoas = adultos + criancas + gratuitos
+  const pessoasExtra = Number(qtdPessoasExtra) || 0
+  const totalPessoas = isExtra ? pessoasExtra : adultos + criancas + gratuitos
 
   const valorCalculado = useMemo(
-    () => adultos * pricing.valor_adulto + criancas * pricing.valor_crianca,
-    [adultos, criancas, pricing],
+    () => (isExtra ? Number(valorManual.replace(',', '.')) || 0 : adultos * pricing.valor_adulto + criancas * pricing.valor_crianca),
+    [isExtra, valorManual, adultos, criancas, pricing],
   )
 
   const sugestaoEntrada = (isExtra ? valorCalculado : valorCalculado / 2).toFixed(2).replace('.', ',')
@@ -91,9 +94,9 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
           telefone: isExtra ? '' : telefone.trim(),
           data_agendamento: dataAgendamento,
           periodo,
-          qtd_adultos: adultos,
-          qtd_criancas: criancas,
-          qtd_gratuitos: gratuitos,
+          qtd_adultos: isExtra ? pessoasExtra : adultos,
+          qtd_criancas: isExtra ? 0 : criancas,
+          qtd_gratuitos: isExtra ? 0 : gratuitos,
           valor_pessoas: valorCalculado,
           valor_pago: pago,
           observacao: observacao.trim() || null,
@@ -186,45 +189,73 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
             </p>
           )}
 
-          <div className="rounded-xl border border-field-100 bg-field-50 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-field-700">Pessoas na reserva</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="mb-1 block text-xs text-earth-600">Adultos ({formatBRL(pricing.valor_adulto)})</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={qtdAdultos}
-                  onChange={(e) => setQtdAdultos(e.target.value)}
-                  className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-earth-600">Criança ({formatBRL(pricing.valor_crianca)})</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={qtdCriancas}
-                  onChange={(e) => setQtdCriancas(e.target.value)}
-                  className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-earth-600">Gratuitos (R$ 0)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={qtdGratuitos}
-                  onChange={(e) => setQtdGratuitos(e.target.value)}
-                  className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
-                />
+          {isExtra ? (
+            <div className="rounded-xl border border-field-100 bg-field-50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-field-700">Visita avulsa</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Quantidade de pessoas</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={qtdPessoasExtra}
+                    onChange={(e) => setQtdPessoasExtra(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Valor a cobrar (R$)</label>
+                  <input
+                    inputMode="decimal"
+                    value={valorManual}
+                    onChange={(e) => setValorManual(e.target.value)}
+                    placeholder="Ex.: 15,00"
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-earth-600">{totalPessoas} pessoa(s) no total</span>
-              <span className="font-semibold text-earth-900">{formatBRL(valorCalculado)}</span>
+          ) : (
+            <div className="rounded-xl border border-field-100 bg-field-50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-field-700">Pessoas na reserva</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Adultos ({formatBRL(pricing.valor_adulto)})</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={qtdAdultos}
+                    onChange={(e) => setQtdAdultos(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Criança ({formatBRL(pricing.valor_crianca)})</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={qtdCriancas}
+                    onChange={(e) => setQtdCriancas(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Gratuitos (R$ 0)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={qtdGratuitos}
+                    onChange={(e) => setQtdGratuitos(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-earth-600">{totalPessoas} pessoa(s) no total</span>
+                <span className="font-semibold text-earth-900">{formatBRL(valorCalculado)}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
