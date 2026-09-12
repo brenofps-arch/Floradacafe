@@ -85,7 +85,15 @@ export function BookingList({
           {bookings.map((booking) => {
             const total = totalGeral(booking)
             const saldo = total - booking.valor_pago
-            const pagoTotal = saldo <= 0
+            const pagoTotal = saldo <= 0.009
+            const entradaEsperada = booking.valor_pessoas / 2
+            const status = pagoTotal
+              ? { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
+              : booking.valor_pago <= 0.009
+                ? { label: 'Entrada não paga', classes: 'bg-red-100 text-red-700' }
+                : booking.valor_pago < entradaEsperada - 0.009
+                  ? { label: 'Entrada paga parcial', classes: 'bg-sun-100 text-sun-700' }
+                  : { label: 'Entrada paga', classes: 'bg-sun-200 text-sun-800' }
             const totalPessoas = booking.qtd_adultos + booking.qtd_criancas + booking.qtd_gratuitos
             const itensTotal = itemsTotalByBooking[booking.id] ?? 0
             return (
@@ -130,12 +138,8 @@ export function BookingList({
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">{formatBRL(booking.valor_pago)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">{formatBRL(Math.max(saldo, 0))}</td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <span
-                    className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${
-                      pagoTotal ? 'bg-field-100 text-field-700' : 'bg-sun-200 text-sun-800'
-                    }`}
-                  >
-                    {pagoTotal ? 'Pago total' : 'Entrada paga'}
+                  <span className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${status.classes}`}>
+                    {status.label}
                   </span>
                 </td>
                 <td className="px-4 py-3">
