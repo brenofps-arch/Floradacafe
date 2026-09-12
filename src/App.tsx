@@ -54,7 +54,7 @@ function Dashboard() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
-  const [sortAlpha, setSortAlpha] = useState(false)
+  const [sortAlpha, setSortAlpha] = useState(true)
   const [monthDate, setMonthDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
