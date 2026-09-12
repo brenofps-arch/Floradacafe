@@ -215,6 +215,15 @@ function Dashboard() {
     await loadAll()
   }
 
+  async function handleUpdateNoShow(booking: Booking, qtd: number) {
+    const { error } = await supabase.from('bookings').update({ qtd_nao_compareceram: qtd }).eq('id', booking.id)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    await loadAll()
+  }
+
   async function handleEditBooking(bookingId: string, patch: BookingEditPatch) {
     const original = bookings.find((b) => b.id === bookingId)
     const { valor_pago, ...bookingFields } = patch
@@ -480,6 +489,7 @@ function Dashboard() {
           onEditPayment={handleEditPayment}
           onDeletePayment={handleDeletePayment}
           onAttachComprovante={handleAttachComprovante}
+          onUpdateNoShow={handleUpdateNoShow}
           onClose={() => setCloseTableBooking(null)}
         />
       )}

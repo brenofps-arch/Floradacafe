@@ -10,6 +10,7 @@ create table if not exists public.bookings (
   qtd_adultos integer not null default 0,
   qtd_criancas integer not null default 0,
   qtd_gratuitos integer not null default 0,
+  qtd_nao_compareceram integer not null default 0 check (qtd_nao_compareceram >= 0),
   valor_pessoas numeric(10, 2) not null default 0,
   valor_pago numeric(10, 2) not null default 0,
   observacao text,

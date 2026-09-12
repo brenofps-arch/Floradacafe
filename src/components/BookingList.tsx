@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatBRL, formatDateDisplay } from '../lib/format'
-import { periodoLabel } from '../lib/schedule'
+import { periodoLabel, valorPessoasEsperado } from '../lib/schedule'
 import type { Booking } from '../types'
 
 interface Props {
@@ -30,7 +30,7 @@ export function BookingList({
   const [deleting, setDeleting] = useState(false)
 
   function totalGeral(booking: Booking) {
-    return booking.valor_pessoas + (itemsTotalByBooking[booking.id] ?? 0)
+    return valorPessoasEsperado(booking) + (itemsTotalByBooking[booking.id] ?? 0)
   }
 
   function handleDeleteClick(booking: Booking) {
@@ -88,7 +88,9 @@ export function BookingList({
             const pagoTotal = saldo <= 0.009
             const entradaEsperada = booking.valor_pessoas / 2
             const status = pagoTotal
-              ? { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
+              ? booking.qtd_nao_compareceram > 0
+                ? { label: 'Fechado', classes: 'bg-field-100 text-field-700' }
+                : { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
               : booking.valor_pago <= 0.009
                 ? { label: 'Entrada não paga', classes: 'bg-red-100 text-red-700' }
                 : booking.valor_pago < entradaEsperada - 0.009
@@ -130,10 +132,18 @@ export function BookingList({
                     {booking.qtd_criancas > 0 && <span> · {booking.qtd_criancas} criança</span>}
                     {booking.qtd_gratuitos > 0 && <span> · {booking.qtd_gratuitos} gratuito(s)</span>}
                   </div>
+                  {booking.qtd_nao_compareceram > 0 && (
+                    <div className="text-xs text-red-500">{booking.qtd_nao_compareceram} não veio</div>
+                  )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">
                   {formatBRL(total)}
                   {itensTotal > 0 && <div className="text-xs text-earth-400">inclui {formatBRL(itensTotal)} em produtos</div>}
+                  {booking.qtd_nao_compareceram > 0 && (
+                    <div className="text-xs text-earth-400">
+                      já descontado quem não veio (<span className="line-through">{formatBRL(booking.valor_pessoas + itensTotal)}</span>)
+                    </div>
+                  )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">{formatBRL(booking.valor_pago)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">{formatBRL(Math.max(saldo, 0))}</td>

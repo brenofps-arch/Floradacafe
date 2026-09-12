@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { formatBRL } from '../lib/format'
 import { FORMAS_PAGAMENTO, formaPagamentoLabel } from '../lib/payments'
+import { totalPessoas, valorPessoasEsperado } from '../lib/schedule'
 import type { Booking, BookingPayment, FormaPagamento } from '../types'
 
 interface NewEntry {
@@ -24,6 +25,7 @@ interface Props {
   onEditPayment: (payment: BookingPayment, patch: EditEntry) => Promise<void>
   onDeletePayment: (payment: BookingPayment) => Promise<void>
   onAttachComprovante: (payment: BookingPayment, file: File) => Promise<void>
+  onUpdateNoShow: (booking: Booking, qtd: number) => Promise<void>
   onClose: () => void
 }
 
@@ -42,16 +44,21 @@ export function CloseTableModal({
   onEditPayment,
   onDeletePayment,
   onAttachComprovante,
+  onUpdateNoShow,
   onClose,
 }: Props) {
-  const totalGeral = booking.valor_pessoas + itemsTotal
+  const valorPessoasAjustado = valorPessoasEsperado(booking)
+  const totalGeral = valorPessoasAjustado + itemsTotal
   const saldo = Math.max(totalGeral - booking.valor_pago, 0)
+  const totalPessoasReserva = totalPessoas(booking)
 
   const [rows, setRows] = useState<Row[]>([
     { forma_pagamento: 'pix', valor: saldo > 0 ? saldo.toFixed(2).replace('.', ',') : '', pagante: '', comprovante: null },
   ])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [naoCompareceram, setNaoCompareceram] = useState(String(booking.qtd_nao_compareceram))
+  const [savingNoShow, setSavingNoShow] = useState(false)
   const [attachingId, setAttachingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editRow, setEditRow] = useState<{ forma_pagamento: FormaPagamento; valor: string; pagante: string } | null>(null)
@@ -153,6 +160,16 @@ export function CloseTableModal({
     setDeleteConfirmId(null)
   }
 
+  async function handleSaveNoShow() {
+    const qtd = Math.max(0, Math.min(totalPessoasReserva, Number(naoCompareceram) || 0))
+    setSavingNoShow(true)
+    try {
+      await onUpdateNoShow(booking, qtd)
+    } finally {
+      setSavingNoShow(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-earth-900/40 px-4">
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-sun-50 p-6 shadow-lg">
@@ -161,8 +178,17 @@ export function CloseTableModal({
 
         <div className="mb-4 rounded-xl border border-earth-200 bg-white p-4 text-sm">
           <div className="flex justify-between py-1">
-            <span className="text-earth-600">Pessoas</span>
-            <span className="text-earth-900">{formatBRL(booking.valor_pessoas)}</span>
+            <span className="text-earth-600">Pessoas ({totalPessoasReserva})</span>
+            <span className="text-earth-900">
+              {valorPessoasAjustado !== booking.valor_pessoas ? (
+                <>
+                  <span className="mr-1 text-xs text-earth-400 line-through">{formatBRL(booking.valor_pessoas)}</span>
+                  {formatBRL(valorPessoasAjustado)}
+                </>
+              ) : (
+                formatBRL(booking.valor_pessoas)
+              )}
+            </span>
           </div>
           <div className="flex justify-between py-1">
             <span className="text-earth-600">Produtos extras</span>
@@ -180,6 +206,32 @@ export function CloseTableModal({
             <span className="font-semibold text-earth-800">Falta pagar agora</span>
             <span className="text-xl font-bold text-sun-800">{formatBRL(saldo)}</span>
           </div>
+        </div>
+
+        <div className="mb-4 rounded-xl border border-earth-200 bg-white p-3">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-earth-500">
+            Pessoas que não vieram
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              max={totalPessoasReserva}
+              value={naoCompareceram}
+              onChange={(e) => setNaoCompareceram(e.target.value)}
+              className="w-20 rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
+            />
+            <button
+              onClick={handleSaveNoShow}
+              disabled={savingNoShow || Number(naoCompareceram) === booking.qtd_nao_compareceram}
+              className="rounded-lg bg-earth-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-earth-700 disabled:opacity-50"
+            >
+              {savingNoShow ? 'Salvando...' : 'Aplicar'}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-earth-400">
+            A entrada de quem faltou já paga fica retida — só descontamos os outros 50% que não seriam cobrados.
+          </p>
         </div>
 
         {payments.length > 0 && (

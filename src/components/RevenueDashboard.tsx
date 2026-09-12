@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatBRL } from '../lib/format'
+import { valorPessoasEsperado } from '../lib/schedule'
 import type { Booking, BookingItem } from '../types'
 
 interface Props {
@@ -34,7 +35,7 @@ export function RevenueDashboard({ bookings, items }: Props) {
     const map = new Map<string, { recebido: number; pendente: number; faturado: number }>()
     for (const booking of bookings) {
       const key = monthKey(booking.data_agendamento)
-      const total = booking.valor_pessoas + (itemsTotalByBooking[booking.id] ?? 0)
+      const total = valorPessoasEsperado(booking) + (itemsTotalByBooking[booking.id] ?? 0)
       const recebido = Math.min(booking.valor_pago, total)
       const pendente = Math.max(total - booking.valor_pago, 0)
       const current = map.get(key) ?? { recebido: 0, pendente: 0, faturado: 0 }
