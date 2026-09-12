@@ -47,6 +47,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [showExtraForm, setShowExtraForm] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [itemsBooking, setItemsBooking] = useState<Booking | null>(null)
@@ -369,8 +370,14 @@ function Dashboard() {
                 </button>
               )}
               <button
+                onClick={() => setShowExtraForm(true)}
+                className="ml-auto rounded-lg border border-field-600 px-4 py-2 text-sm font-medium text-field-700 hover:bg-field-50"
+              >
+                + Extra
+              </button>
+              <button
                 onClick={() => setShowForm(true)}
-                className="ml-auto rounded-lg bg-sun-500 px-4 py-2 text-sm font-medium text-white hover:bg-sun-600"
+                className="rounded-lg bg-sun-500 px-4 py-2 text-sm font-medium text-white hover:bg-sun-600"
               >
                 + Novo agendamento
               </button>
@@ -432,6 +439,15 @@ function Dashboard() {
 
       {showForm && (
         <BookingForm pricing={pricing} bookings={bookings} onSubmit={handleCreate} onClose={() => setShowForm(false)} />
+      )}
+      {showExtraForm && (
+        <BookingForm
+          pricing={pricing}
+          bookings={bookings}
+          variant="extra"
+          onSubmit={handleCreate}
+          onClose={() => setShowExtraForm(false)}
+        />
       )}
       {showPricing && (
         <PricingModal pricing={pricing} onSave={handleSavePricing} onClose={() => setShowPricing(false)} />

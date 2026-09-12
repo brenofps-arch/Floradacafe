@@ -106,7 +106,7 @@ export function BookingList({
                     </p>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-earth-600">{booking.telefone}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-earth-600">{booking.telefone || '—'}</td>
                 {showDateColumns && (
                   <td className="whitespace-nowrap px-4 py-3 text-earth-600">
                     {formatDateDisplay(booking.data_agendamento)}

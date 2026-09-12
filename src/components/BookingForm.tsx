@@ -7,6 +7,7 @@ import type { Booking, BookingInput, FormaPagamento, Periodo, PricingSettings } 
 interface Props {
   pricing: PricingSettings
   bookings: Booking[]
+  variant?: 'reserva' | 'extra'
   onSubmit: (
     input: BookingInput,
     entradaForma: FormaPagamento | null,
@@ -20,7 +21,8 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
+export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, onClose }: Props) {
+  const isExtra = variant === 'extra'
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [dataAgendamento, setDataAgendamento] = useState(todayIso())
@@ -54,7 +56,7 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
     [adultos, criancas, pricing],
   )
 
-  const sugestaoEntrada = (valorCalculado / 2).toFixed(2).replace('.', ',')
+  const sugestaoEntrada = (isExtra ? valorCalculado : valorCalculado / 2).toFixed(2).replace('.', ',')
 
   const jaAgendados = useMemo(() => {
     return bookings
@@ -68,7 +70,7 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
 
     const pago = Number((valorPago || '0').replace(',', '.'))
 
-    if (!nome.trim() || !telefone.trim()) {
+    if (!isExtra && (!nome.trim() || !telefone.trim())) {
       setError('Preencha nome e telefone.')
       return
     }
@@ -85,8 +87,8 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
     try {
       await onSubmit(
         {
-          nome: nome.trim(),
-          telefone: telefone.trim(),
+          nome: isExtra ? nome.trim() || 'Extra' : nome.trim(),
+          telefone: isExtra ? '' : telefone.trim(),
           data_agendamento: dataAgendamento,
           periodo,
           qtd_adultos: adultos,
@@ -111,27 +113,36 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-earth-900/40 px-4">
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-sun-50 p-6 shadow-lg">
-        <h2 className="mb-4 font-script text-2xl text-earth-900">Novo agendamento</h2>
+        <h2 className="mb-4 font-script text-2xl text-earth-900">{isExtra ? 'Adicionar extra' : 'Novo agendamento'}</h2>
+        {isExtra && (
+          <p className="-mt-2 mb-3 text-xs text-earth-500">
+            Para quem chegou sem reserva — não precisa de nome nem telefone.
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-earth-700">Nome do cliente</label>
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-earth-700">WhatsApp / Telefone</label>
-            <input
-              value={telefone}
-              onChange={(e) => setTelefone(formatTelefone(e.target.value))}
-              placeholder="(11) 91234-5678"
-              inputMode="numeric"
-              className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
-            />
-          </div>
+          {!isExtra && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">Nome do cliente</label>
+                <input
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-earth-700">WhatsApp / Telefone</label>
+                <input
+                  value={telefone}
+                  onChange={(e) => setTelefone(formatTelefone(e.target.value))}
+                  placeholder="(11) 91234-5678"
+                  inputMode="numeric"
+                  className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                />
+              </div>
+            </>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm font-medium text-earth-700">Data</label>
@@ -218,7 +229,10 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm font-medium text-earth-700">
-                Entrada paga (R$) <span className="font-normal text-earth-400">— 50%: {sugestaoEntrada}</span>
+                {isExtra ? 'Valor pago (R$)' : 'Entrada paga (R$)'}{' '}
+                <span className="font-normal text-earth-400">
+                  — {isExtra ? 'total' : '50%'}: {sugestaoEntrada}
+                </span>
               </label>
               <input
                 inputMode="decimal"
@@ -292,7 +306,7 @@ export function BookingForm({ pricing, bookings, onSubmit, onClose }: Props) {
               disabled={saving}
               className="rounded-lg bg-sun-500 px-4 py-2 text-sm font-medium text-white hover:bg-sun-600 disabled:opacity-60"
             >
-              {saving ? 'Salvando...' : 'Salvar agendamento'}
+              {saving ? 'Salvando...' : isExtra ? 'Adicionar extra' : 'Salvar agendamento'}
             </button>
           </div>
         </form>
