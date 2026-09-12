@@ -215,8 +215,11 @@ function Dashboard() {
     await loadAll()
   }
 
-  async function handleUpdateNoShow(booking: Booking, qtd: number) {
-    const { error } = await supabase.from('bookings').update({ qtd_nao_compareceram: qtd }).eq('id', booking.id)
+  async function handleUpdateNoShow(booking: Booking, adultos: number, criancas: number) {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ qtd_adultos_nao_compareceram: adultos, qtd_criancas_nao_compareceram: criancas })
+      .eq('id', booking.id)
     if (error) {
       setError(error.message)
       return
@@ -409,6 +412,7 @@ function Dashboard() {
                   label="Manhã"
                   bookings={filtered.filter((b) => b.periodo === 'manha')}
                   itemsTotalByBooking={itemsTotalByBooking}
+                  pricing={pricing}
                   onCloseTable={setCloseTableBooking}
                   onEdit={setEditingBooking}
                   onDelete={handleDelete}
@@ -420,6 +424,7 @@ function Dashboard() {
                   label="Tarde"
                   bookings={filtered.filter((b) => b.periodo === 'tarde')}
                   itemsTotalByBooking={itemsTotalByBooking}
+                  pricing={pricing}
                   onCloseTable={setCloseTableBooking}
                   onEdit={setEditingBooking}
                   onDelete={handleDelete}
@@ -432,6 +437,7 @@ function Dashboard() {
               <BookingList
                 bookings={filtered}
                 itemsTotalByBooking={itemsTotalByBooking}
+                pricing={pricing}
                 onCloseTable={setCloseTableBooking}
                 onEdit={setEditingBooking}
                 onDelete={handleDelete}
@@ -442,7 +448,7 @@ function Dashboard() {
             )}
           </>
         ) : (
-          <RevenueDashboard bookings={bookings} items={items} />
+          <RevenueDashboard bookings={bookings} items={items} pricing={pricing} />
         )}
       </main>
 
@@ -483,6 +489,7 @@ function Dashboard() {
       {closeTableBooking && (
         <CloseTableModal
           booking={closeTableBooking}
+          pricing={pricing}
           itemsTotal={itemsTotalByBooking[closeTableBooking.id] ?? 0}
           payments={payments.filter((p) => p.booking_id === closeTableBooking.id)}
           onAddPayments={(entries) => handleAddPayments(closeTableBooking, entries)}
@@ -509,6 +516,7 @@ function PeriodSection({
   label,
   bookings,
   itemsTotalByBooking,
+  pricing,
   onCloseTable,
   onEdit,
   onDelete,
@@ -519,6 +527,7 @@ function PeriodSection({
   label: string
   bookings: Booking[]
   itemsTotalByBooking: Record<string, number>
+  pricing: PricingSettings
   onCloseTable: (booking: Booking) => void
   onEdit: (booking: Booking) => void
   onDelete: (booking: Booking) => Promise<void>
@@ -538,6 +547,7 @@ function PeriodSection({
       <BookingList
         bookings={bookings}
         itemsTotalByBooking={itemsTotalByBooking}
+        pricing={pricing}
         onCloseTable={onCloseTable}
         onEdit={onEdit}
         onDelete={onDelete}

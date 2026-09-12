@@ -1,4 +1,4 @@
-import type { Booking, Periodo } from '../types'
+import type { Booking, Periodo, PricingSettings } from '../types'
 
 export function weekdayOf(isoDate: string) {
   const [year, month, day] = isoDate.split('-').map(Number)
@@ -21,17 +21,27 @@ export function totalPessoas(booking: Pick<Booking, 'qtd_adultos' | 'qtd_crianca
   return booking.qtd_adultos + booking.qtd_criancas + booking.qtd_gratuitos
 }
 
+export function totalNaoCompareceram(
+  booking: Pick<Booking, 'qtd_adultos_nao_compareceram' | 'qtd_criancas_nao_compareceram'>,
+) {
+  return booking.qtd_adultos_nao_compareceram + booking.qtd_criancas_nao_compareceram
+}
+
 /**
- * Valor de pessoas esperado descontando quem não compareceu.
+ * Valor de pessoas esperado descontando quem não compareceu, por categoria
+ * (adulto ou criança, cada um com seu próprio preço).
  * A entrada (50%) já paga fica retida, mas os outros 50% de quem faltou não são cobrados.
  */
 export function valorPessoasEsperado(
-  booking: Pick<Booking, 'qtd_adultos' | 'qtd_criancas' | 'qtd_gratuitos' | 'qtd_nao_compareceram' | 'valor_pessoas'>,
+  booking: Pick<
+    Booking,
+    'qtd_adultos' | 'qtd_criancas' | 'qtd_adultos_nao_compareceram' | 'qtd_criancas_nao_compareceram' | 'valor_pessoas'
+  >,
+  pricing: Pick<PricingSettings, 'valor_adulto' | 'valor_crianca'>,
 ) {
-  const total = totalPessoas(booking)
-  if (total <= 0 || booking.qtd_nao_compareceram <= 0) return booking.valor_pessoas
-  const precoMedio = booking.valor_pessoas / total
-  const faltantes = Math.min(booking.qtd_nao_compareceram, total)
-  const abatimento = precoMedio * faltantes * 0.5
+  const adultosFaltantes = Math.min(booking.qtd_adultos_nao_compareceram, booking.qtd_adultos)
+  const criancasFaltantes = Math.min(booking.qtd_criancas_nao_compareceram, booking.qtd_criancas)
+  if (adultosFaltantes <= 0 && criancasFaltantes <= 0) return booking.valor_pessoas
+  const abatimento = (adultosFaltantes * pricing.valor_adulto + criancasFaltantes * pricing.valor_crianca) * 0.5
   return Math.max(booking.valor_pessoas - abatimento, 0)
 }

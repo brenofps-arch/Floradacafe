@@ -9,7 +9,8 @@ export interface Booking {
   qtd_adultos: number
   qtd_criancas: number
   qtd_gratuitos: number
-  qtd_nao_compareceram: number
+  qtd_adultos_nao_compareceram: number
+  qtd_criancas_nao_compareceram: number
   valor_pessoas: number
   valor_pago: number
   observacao: string | null

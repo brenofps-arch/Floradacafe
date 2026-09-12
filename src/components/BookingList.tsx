@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { formatBRL, formatDateDisplay } from '../lib/format'
-import { periodoLabel, valorPessoasEsperado } from '../lib/schedule'
-import type { Booking } from '../types'
+import { periodoLabel, totalNaoCompareceram, valorPessoasEsperado } from '../lib/schedule'
+import type { Booking, PricingSettings } from '../types'
 
 interface Props {
   bookings: Booking[]
   itemsTotalByBooking: Record<string, number>
+  pricing: PricingSettings
   onCloseTable: (booking: Booking) => void
   onEdit: (booking: Booking) => void
   onDelete: (booking: Booking) => Promise<void>
@@ -18,6 +19,7 @@ interface Props {
 export function BookingList({
   bookings,
   itemsTotalByBooking,
+  pricing,
   onCloseTable,
   onEdit,
   onDelete,
@@ -30,7 +32,7 @@ export function BookingList({
   const [deleting, setDeleting] = useState(false)
 
   function totalGeral(booking: Booking) {
-    return valorPessoasEsperado(booking) + (itemsTotalByBooking[booking.id] ?? 0)
+    return valorPessoasEsperado(booking, pricing) + (itemsTotalByBooking[booking.id] ?? 0)
   }
 
   function handleDeleteClick(booking: Booking) {
@@ -87,8 +89,9 @@ export function BookingList({
             const saldo = total - booking.valor_pago
             const pagoTotal = saldo <= 0.009
             const entradaEsperada = booking.valor_pessoas / 2
+            const naoCompareceram = totalNaoCompareceram(booking)
             const status = pagoTotal
-              ? booking.qtd_nao_compareceram > 0
+              ? naoCompareceram > 0
                 ? { label: 'Fechado', classes: 'bg-field-100 text-field-700' }
                 : { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
               : booking.valor_pago <= 0.009
@@ -132,14 +135,19 @@ export function BookingList({
                     {booking.qtd_criancas > 0 && <span> · {booking.qtd_criancas} criança</span>}
                     {booking.qtd_gratuitos > 0 && <span> · {booking.qtd_gratuitos} gratuito(s)</span>}
                   </div>
-                  {booking.qtd_nao_compareceram > 0 && (
-                    <div className="text-xs text-red-500">{booking.qtd_nao_compareceram} não veio</div>
+                  {naoCompareceram > 0 && (
+                    <div className="text-xs text-red-500">
+                      {booking.qtd_adultos_nao_compareceram > 0 && <span>{booking.qtd_adultos_nao_compareceram} adulto(s)</span>}
+                      {booking.qtd_adultos_nao_compareceram > 0 && booking.qtd_criancas_nao_compareceram > 0 && <span> · </span>}
+                      {booking.qtd_criancas_nao_compareceram > 0 && <span>{booking.qtd_criancas_nao_compareceram} criança(s)</span>}
+                      {' '}não veio
+                    </div>
                   )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-earth-600">
                   {formatBRL(total)}
                   {itensTotal > 0 && <div className="text-xs text-earth-400">inclui {formatBRL(itensTotal)} em produtos</div>}
-                  {booking.qtd_nao_compareceram > 0 && (
+                  {naoCompareceram > 0 && (
                     <div className="text-xs text-earth-400">
                       já descontado quem não veio (<span className="line-through">{formatBRL(booking.valor_pessoas + itensTotal)}</span>)
                     </div>

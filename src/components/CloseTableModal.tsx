@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { formatBRL } from '../lib/format'
 import { FORMAS_PAGAMENTO, formaPagamentoLabel } from '../lib/payments'
-import { totalPessoas, valorPessoasEsperado } from '../lib/schedule'
-import type { Booking, BookingPayment, FormaPagamento } from '../types'
+import { totalNaoCompareceram, totalPessoas, valorPessoasEsperado } from '../lib/schedule'
+import type { Booking, BookingPayment, FormaPagamento, PricingSettings } from '../types'
 
 interface NewEntry {
   forma_pagamento: FormaPagamento
@@ -19,13 +19,14 @@ interface EditEntry {
 
 interface Props {
   booking: Booking
+  pricing: PricingSettings
   itemsTotal: number
   payments: BookingPayment[]
   onAddPayments: (entries: NewEntry[]) => Promise<void>
   onEditPayment: (payment: BookingPayment, patch: EditEntry) => Promise<void>
   onDeletePayment: (payment: BookingPayment) => Promise<void>
   onAttachComprovante: (payment: BookingPayment, file: File) => Promise<void>
-  onUpdateNoShow: (booking: Booking, qtd: number) => Promise<void>
+  onUpdateNoShow: (booking: Booking, adultos: number, criancas: number) => Promise<void>
   onClose: () => void
 }
 
@@ -38,6 +39,7 @@ interface Row {
 
 export function CloseTableModal({
   booking,
+  pricing,
   itemsTotal,
   payments,
   onAddPayments,
@@ -47,17 +49,20 @@ export function CloseTableModal({
   onUpdateNoShow,
   onClose,
 }: Props) {
-  const valorPessoasAjustado = valorPessoasEsperado(booking)
+  const valorPessoasAjustado = valorPessoasEsperado(booking, pricing)
   const totalGeral = valorPessoasAjustado + itemsTotal
   const saldo = Math.max(totalGeral - booking.valor_pago, 0)
   const totalPessoasReserva = totalPessoas(booking)
+  const jaTemFaltantes = totalNaoCompareceram(booking) > 0
 
   const [rows, setRows] = useState<Row[]>([
     { forma_pagamento: 'pix', valor: saldo > 0 ? saldo.toFixed(2).replace('.', ',') : '', pagante: '', comprovante: null },
   ])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [naoCompareceram, setNaoCompareceram] = useState(String(booking.qtd_nao_compareceram))
+  const [showNoShow, setShowNoShow] = useState(jaTemFaltantes)
+  const [adultosNaoVieram, setAdultosNaoVieram] = useState(String(booking.qtd_adultos_nao_compareceram))
+  const [criancasNaoVieram, setCriancasNaoVieram] = useState(String(booking.qtd_criancas_nao_compareceram))
   const [savingNoShow, setSavingNoShow] = useState(false)
   const [attachingId, setAttachingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -161,14 +166,19 @@ export function CloseTableModal({
   }
 
   async function handleSaveNoShow() {
-    const qtd = Math.max(0, Math.min(totalPessoasReserva, Number(naoCompareceram) || 0))
+    const adultos = Math.max(0, Math.min(booking.qtd_adultos, Number(adultosNaoVieram) || 0))
+    const criancas = Math.max(0, Math.min(booking.qtd_criancas, Number(criancasNaoVieram) || 0))
     setSavingNoShow(true)
     try {
-      await onUpdateNoShow(booking, qtd)
+      await onUpdateNoShow(booking, adultos, criancas)
     } finally {
       setSavingNoShow(false)
     }
   }
+
+  const noShowChanged =
+    Number(adultosNaoVieram) !== booking.qtd_adultos_nao_compareceram ||
+    Number(criancasNaoVieram) !== booking.qtd_criancas_nao_compareceram
 
   return (
     <div className="fixed inset-0 z-20 flex items-center justify-center bg-earth-900/40 px-4">
@@ -209,29 +219,58 @@ export function CloseTableModal({
         </div>
 
         <div className="mb-4 rounded-xl border border-earth-200 bg-white p-3">
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-earth-500">
-            Pessoas que não vieram
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              max={totalPessoasReserva}
-              value={naoCompareceram}
-              onChange={(e) => setNaoCompareceram(e.target.value)}
-              className="w-20 rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
-            />
-            <button
-              onClick={handleSaveNoShow}
-              disabled={savingNoShow || Number(naoCompareceram) === booking.qtd_nao_compareceram}
-              className="rounded-lg bg-earth-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-earth-700 disabled:opacity-50"
-            >
-              {savingNoShow ? 'Salvando...' : 'Aplicar'}
-            </button>
-          </div>
-          <p className="mt-1 text-xs text-earth-400">
-            A entrada de quem faltou já paga fica retida — só descontamos os outros 50% que não seriam cobrados.
-          </p>
+          <button
+            onClick={() => setShowNoShow((v) => !v)}
+            className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wide text-earth-500"
+          >
+            <span>
+              Pessoas que não vieram
+              {jaTemFaltantes && !showNoShow && (
+                <span className="ml-2 normal-case text-red-500">
+                  ({booking.qtd_adultos_nao_compareceram + booking.qtd_criancas_nao_compareceram})
+                </span>
+              )}
+            </span>
+            <span>{showNoShow ? '▲' : '▼'}</span>
+          </button>
+          {showNoShow && (
+            <div className="mt-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Adultos ({formatBRL(pricing.valor_adulto)})</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={booking.qtd_adultos}
+                    value={adultosNaoVieram}
+                    onChange={(e) => setAdultosNaoVieram(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-earth-600">Crianças ({formatBRL(pricing.valor_crianca)})</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={booking.qtd_criancas}
+                    value={criancasNaoVieram}
+                    onChange={(e) => setCriancasNaoVieram(e.target.value)}
+                    className="w-full rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleSaveNoShow}
+                disabled={savingNoShow || !noShowChanged}
+                className="mt-2 rounded-lg bg-earth-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-earth-700 disabled:opacity-50"
+              >
+                {savingNoShow ? 'Salvando...' : 'Aplicar'}
+              </button>
+              <p className="mt-1 text-xs text-earth-400">
+                A entrada de quem faltou já paga fica retida — só descontamos os outros 50% que não seriam cobrados.
+              </p>
+            </div>
+          )}
         </div>
 
         {payments.length > 0 && (

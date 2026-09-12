@@ -2,11 +2,12 @@ import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatBRL } from '../lib/format'
 import { valorPessoasEsperado } from '../lib/schedule'
-import type { Booking, BookingItem } from '../types'
+import type { Booking, BookingItem, PricingSettings } from '../types'
 
 interface Props {
   bookings: Booking[]
   items: BookingItem[]
+  pricing: PricingSettings
 }
 
 const MESES = [
@@ -22,7 +23,7 @@ function monthLabel(key: string) {
   return `${MESES[Number(month) - 1]}/${year.slice(2)}`
 }
 
-export function RevenueDashboard({ bookings, items }: Props) {
+export function RevenueDashboard({ bookings, items, pricing }: Props) {
   const itemsTotalByBooking = useMemo(() => {
     const map: Record<string, number> = {}
     for (const item of items) {
@@ -35,7 +36,7 @@ export function RevenueDashboard({ bookings, items }: Props) {
     const map = new Map<string, { recebido: number; pendente: number; faturado: number }>()
     for (const booking of bookings) {
       const key = monthKey(booking.data_agendamento)
-      const total = valorPessoasEsperado(booking) + (itemsTotalByBooking[booking.id] ?? 0)
+      const total = valorPessoasEsperado(booking, pricing) + (itemsTotalByBooking[booking.id] ?? 0)
       const recebido = Math.min(booking.valor_pago, total)
       const pendente = Math.max(total - booking.valor_pago, 0)
       const current = map.get(key) ?? { recebido: 0, pendente: 0, faturado: 0 }
@@ -47,7 +48,7 @@ export function RevenueDashboard({ bookings, items }: Props) {
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => ({ key, label: monthLabel(key), ...value }))
-  }, [bookings, itemsTotalByBooking])
+  }, [bookings, itemsTotalByBooking, pricing])
 
   const currentMonthKey = new Date().toISOString().slice(0, 7)
   const currentMonth = monthly.find((m) => m.key === currentMonthKey)
