@@ -457,13 +457,20 @@ function Dashboard() {
       </main>
 
       {showForm && (
-        <BookingForm pricing={pricing} bookings={bookings} onSubmit={handleCreate} onClose={() => setShowForm(false)} />
+        <BookingForm
+          pricing={pricing}
+          bookings={bookings}
+          initialDate={dateFilter || null}
+          onSubmit={handleCreate}
+          onClose={() => setShowForm(false)}
+        />
       )}
       {showExtraForm && (
         <BookingForm
           pricing={pricing}
           bookings={bookings}
           variant="extra"
+          initialDate={dateFilter || null}
           onSubmit={handleCreate}
           onClose={() => setShowExtraForm(false)}
         />

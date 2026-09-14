@@ -8,6 +8,7 @@ interface Props {
   pricing: PricingSettings
   bookings: Booking[]
   variant?: 'reserva' | 'extra'
+  initialDate?: string | null
   onSubmit: (
     input: BookingInput,
     entradaForma: FormaPagamento | null,
@@ -17,15 +18,11 @@ interface Props {
   onClose: () => void
 }
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, onClose }: Props) {
+export function BookingForm({ pricing, bookings, variant = 'reserva', initialDate, onSubmit, onClose }: Props) {
   const isExtra = variant === 'extra'
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [dataAgendamento, setDataAgendamento] = useState(todayIso())
+  const [dataAgendamento, setDataAgendamento] = useState(initialDate ?? '')
   const [periodo, setPeriodo] = useState<Periodo>('tarde')
   const [qtdAdultos, setQtdAdultos] = useState('1')
   const [qtdCriancas, setQtdCriancas] = useState('0')
@@ -73,6 +70,10 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
 
     const pago = Number((valorPago || '0').replace(',', '.'))
 
+    if (!dataAgendamento) {
+      setError('Selecione a data do agendamento.')
+      return
+    }
     if (!isExtra && (!nome.trim() || !telefone.trim())) {
       setError('Preencha nome e telefone.')
       return
@@ -151,9 +152,12 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', onSubmit, 
               <label className="mb-1 block text-sm font-medium text-earth-700">Data</label>
               <input
                 type="date"
+                required
                 value={dataAgendamento}
                 onChange={(e) => setDataAgendamento(e.target.value)}
-                className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
+                className={`w-full rounded-lg border bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none ${
+                  !dataAgendamento ? 'border-red-300' : 'border-earth-200'
+                }`}
               />
             </div>
             <div>
