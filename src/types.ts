@@ -81,3 +81,17 @@ export interface MenuItem {
 }
 
 export type MenuItemInput = Pick<MenuItem, 'nome' | 'valor'>
+
+export type AuditAction = 'insert' | 'update' | 'delete'
+
+export interface AuditLogEntry {
+  id: string
+  table_name: string
+  record_id: string
+  action: AuditAction
+  actor_id: string | null
+  actor_email: string | null
+  summary: string | null
+  data: unknown
+  created_at: string
+}

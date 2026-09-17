@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AuditLogModal } from './components/AuditLogModal'
 import { BookingForm } from './components/BookingForm'
 import { BookingItemsModal } from './components/BookingItemsModal'
 import { BookingList } from './components/BookingList'
@@ -15,6 +16,7 @@ import { totalPessoas } from './lib/schedule'
 import { uploadComprovante } from './lib/storage'
 import { supabase } from './lib/supabase'
 import type {
+  AuditLogEntry,
   Booking,
   BookingInput,
   BookingItem,
@@ -50,6 +52,9 @@ function Dashboard() {
   const [showExtraForm, setShowExtraForm] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showAuditLog, setShowAuditLog] = useState(false)
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
   const [itemsBooking, setItemsBooking] = useState<Booking | null>(null)
   const [closeTableBooking, setCloseTableBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
@@ -299,6 +304,19 @@ function Dashboard() {
     await loadAll()
   }
 
+  async function handleOpenAuditLog() {
+    setShowAuditLog(true)
+    setAuditLoading(true)
+    const { data, error } = await supabase
+      .from('audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (!error) setAuditLog(data as AuditLogEntry[])
+    else setError(error.message)
+    setAuditLoading(false)
+  }
+
   async function handleDeleteMenuItem(item: MenuItem) {
     const { error } = await supabase.from('menu_items').delete().eq('id', item.id)
     if (error) {
@@ -379,6 +397,14 @@ function Dashboard() {
                   className="rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-600 hover:bg-earth-50"
                 >
                   Cardápio
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={handleOpenAuditLog}
+                  className="rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm text-earth-600 hover:bg-earth-50"
+                >
+                  Atividade
                 </button>
               )}
               <button
@@ -477,6 +503,9 @@ function Dashboard() {
       )}
       {showPricing && (
         <PricingModal pricing={pricing} onSave={handleSavePricing} onClose={() => setShowPricing(false)} />
+      )}
+      {showAuditLog && (
+        <AuditLogModal entries={auditLog} loading={auditLoading} onClose={() => setShowAuditLog(false)} />
       )}
       {showMenu && (
         <MenuModal
