@@ -260,3 +260,7 @@ drop trigger if exists bookings_audit_trigger on public.bookings;
 create trigger bookings_audit_trigger
   after insert or update or delete on public.bookings
   for each row execute function public.log_booking_change();
+
+-- Cardapio publico (pagina do QR code das mesas)
+create policy "Anon can view menu items"
+  on public.menu_items for select to anon using (true);
