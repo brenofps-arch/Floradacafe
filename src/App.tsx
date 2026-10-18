@@ -24,6 +24,7 @@ import type {
   FormaPagamento,
   MenuCategoria,
   MenuItem,
+  MenuTamanho,
   PricingSettings,
   Role,
 } from './types'
@@ -293,14 +294,30 @@ function Dashboard() {
     await loadAll()
   }
 
-  async function handleAddMenuItem(nome: string, valor: number, categoria: MenuCategoria | null) {
-    const { error } = await supabase.from('menu_items').insert({ nome, valor, categoria })
+  async function handleAddMenuItem(
+    nome: string,
+    valor: number,
+    categoria: MenuCategoria | null,
+    grupo: string | null,
+    tamanho: MenuTamanho | null,
+  ) {
+    const { error } = await supabase.from('menu_items').insert({ nome, valor, categoria, grupo, tamanho })
     if (error) throw new Error(error.message)
     await loadAll()
   }
 
-  async function handleEditMenuItem(item: MenuItem, nome: string, valor: number, categoria: MenuCategoria | null) {
-    const { error } = await supabase.from('menu_items').update({ nome, valor, categoria }).eq('id', item.id)
+  async function handleEditMenuItem(
+    item: MenuItem,
+    nome: string,
+    valor: number,
+    categoria: MenuCategoria | null,
+    grupo: string | null,
+    tamanho: MenuTamanho | null,
+  ) {
+    const { error } = await supabase
+      .from('menu_items')
+      .update({ nome, valor, categoria, grupo, tamanho })
+      .eq('id', item.id)
     if (error) throw new Error(error.message)
     await loadAll()
   }

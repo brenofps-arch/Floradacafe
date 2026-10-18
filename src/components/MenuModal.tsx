@@ -1,11 +1,24 @@
 import { useState, type FormEvent } from 'react'
 import { formatBRL } from '../lib/format'
-import { MENU_CATEGORIAS, type MenuCategoria, type MenuItem } from '../types'
+import { MENU_CATEGORIAS, type MenuCategoria, type MenuItem, type MenuTamanho } from '../types'
 
 interface Props {
   menuItems: MenuItem[]
-  onAdd: (nome: string, valor: number, categoria: MenuCategoria | null) => Promise<void>
-  onEdit: (item: MenuItem, nome: string, valor: number, categoria: MenuCategoria | null) => Promise<void>
+  onAdd: (
+    nome: string,
+    valor: number,
+    categoria: MenuCategoria | null,
+    grupo: string | null,
+    tamanho: MenuTamanho | null,
+  ) => Promise<void>
+  onEdit: (
+    item: MenuItem,
+    nome: string,
+    valor: number,
+    categoria: MenuCategoria | null,
+    grupo: string | null,
+    tamanho: MenuTamanho | null,
+  ) => Promise<void>
   onUploadFoto: (item: MenuItem, file: File) => Promise<void>
   onDelete: (item: MenuItem) => Promise<void>
   onClose: () => void
@@ -34,6 +47,39 @@ function CategoriaSelect({
   )
 }
 
+function TamanhoFields({
+  grupo,
+  tamanho,
+  onGrupo,
+  onTamanho,
+}: {
+  grupo: string
+  tamanho: MenuTamanho | ''
+  onGrupo: (v: string) => void
+  onTamanho: (v: MenuTamanho | '') => void
+}) {
+  return (
+    <div className="flex gap-2">
+      <select
+        value={tamanho}
+        onChange={(e) => onTamanho(e.target.value as MenuTamanho | '')}
+        className="w-1/2 rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
+      >
+        <option value="">Tamanho único</option>
+        <option value="pequeno">Pequeno</option>
+        <option value="grande">Grande</option>
+      </select>
+      <input
+        value={grupo}
+        onChange={(e) => onGrupo(e.target.value)}
+        disabled={!tamanho}
+        placeholder="Nome na linha (ex.: Café chemics)"
+        className="w-1/2 rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none disabled:bg-earth-50"
+      />
+    </div>
+  )
+}
+
 export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, onClose }: Props) {
   const [fotoUploadingId, setFotoUploadingId] = useState<string | null>(null)
   const [fotoError, setFotoError] = useState<string | null>(null)
@@ -54,6 +100,8 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
   const [categoria, setCategoria] = useState<MenuCategoria | ''>('')
+  const [grupo, setGrupo] = useState('')
+  const [tamanho, setTamanho] = useState<MenuTamanho | ''>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,6 +109,8 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
   const [editNome, setEditNome] = useState('')
   const [editValor, setEditValor] = useState('')
   const [editCategoria, setEditCategoria] = useState<MenuCategoria | ''>('')
+  const [editGrupo, setEditGrupo] = useState('')
+  const [editTamanho, setEditTamanho] = useState<MenuTamanho | ''>('')
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -78,10 +128,12 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
     }
     setSaving(true)
     try {
-      await onAdd(nome.trim(), valorNum, categoria || null)
+      await onAdd(nome.trim(), valorNum, categoria || null, tamanho ? grupo.trim() || null : null, tamanho || null)
       setNome('')
       setValor('')
       setCategoria('')
+      setGrupo('')
+      setTamanho('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao adicionar produto.')
     } finally {
@@ -94,6 +146,8 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
     setEditNome(item.nome)
     setEditValor(item.valor.toFixed(2).replace('.', ','))
     setEditCategoria(item.categoria ?? '')
+    setEditGrupo(item.grupo ?? '')
+    setEditTamanho(item.tamanho ?? '')
     setEditError(null)
   }
 
@@ -110,7 +164,14 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
     }
     setEditSaving(true)
     try {
-      await onEdit(item, editNome.trim(), valorNum, editCategoria || null)
+      await onEdit(
+        item,
+        editNome.trim(),
+        valorNum,
+        editCategoria || null,
+        editTamanho ? editGrupo.trim() || null : null,
+        editTamanho || null,
+      )
       setEditingId(null)
     } catch (err) {
       setEditError(err instanceof Error ? err.message : 'Erro ao editar produto.')
@@ -145,6 +206,14 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
                   <div className="mt-2">
                     <CategoriaSelect value={editCategoria} onChange={setEditCategoria} />
                   </div>
+                  <div className="mt-2">
+                    <TamanhoFields
+                      grupo={editGrupo}
+                      tamanho={editTamanho}
+                      onGrupo={setEditGrupo}
+                      onTamanho={setEditTamanho}
+                    />
+                  </div>
                   {editError && <p className="mt-1 text-xs text-red-600">{editError}</p>}
                   <div className="mt-2 flex justify-end gap-2">
                     <button
@@ -174,6 +243,7 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
                     {item.nome}
                     <span className="ml-2 text-xs text-earth-400">
                       {MENU_CATEGORIAS.find((c) => c.id === item.categoria)?.label ?? 'oculto no público'}
+                      {item.tamanho ? ` · ${item.tamanho}` : ''}
                     </span>
                     </span>
                   </span>
@@ -228,10 +298,11 @@ export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, on
             inputMode="decimal"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
-            placeholder="Valor (R$)"
+            placeholder="Valor (R$) — 0 aparece como &quot;Sob consulta&quot; no cardápio público"
             className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
           />
           <CategoriaSelect value={categoria} onChange={setCategoria} />
+          <TamanhoFields grupo={grupo} tamanho={tamanho} onGrupo={setGrupo} onTamanho={setTamanho} />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"

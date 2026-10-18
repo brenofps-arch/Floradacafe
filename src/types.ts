@@ -73,13 +73,16 @@ export interface Profile {
   created_at: string
 }
 
-export type MenuCategoria = 'bebidas' | 'alcoolicas' | 'cafes'
+export type MenuCategoria = 'bebidas' | 'alcoolicas' | 'cafes' | 'outros'
 
 export const MENU_CATEGORIAS: { id: MenuCategoria; label: string }[] = [
   { id: 'cafes', label: 'Cafés' },
   { id: 'bebidas', label: 'Bebidas' },
-  { id: 'alcoolicas', label: 'Bebidas alcoólicas' },
+  { id: 'alcoolicas', label: 'Bebidas Alcoólicas' },
+  { id: 'outros', label: 'Outros Produtos e Serviços' },
 ]
+
+export type MenuTamanho = 'pequeno' | 'grande'
 
 export interface MenuItem {
   id: string
@@ -87,6 +90,8 @@ export interface MenuItem {
   valor: number
   categoria: MenuCategoria | null
   foto_url: string | null
+  grupo: string | null
+  tamanho: MenuTamanho | null
   created_at: string
 }
 
