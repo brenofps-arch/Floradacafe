@@ -72,7 +72,9 @@ function Preco({
   const medida = !semMedida && (comMedida || rotulo) ? medidaDe(item.nome) : null
   return (
     <span className="flex flex-col items-center leading-tight">
-      {rotulo && <span className="text-[9px] font-medium uppercase tracking-wide text-earth-400">{rotulo}</span>}
+      {rotulo && (
+        <span className="text-center text-[9px] font-medium uppercase tracking-wide text-earth-400">{rotulo}</span>
+      )}
       {item.valor === 0 ? (
         <span className="text-center text-[11px] font-medium leading-tight text-earth-600">Sob consulta</span>
       ) : (
@@ -144,18 +146,18 @@ export function PublicMenu() {
             <h2 className="mb-3 font-script text-2xl text-earth-900">Nossa história</h2>
             <div className="space-y-3 text-sm leading-relaxed text-earth-700">
               <p>
-                Há mais de 80 anos, esta terra é o lar do Sr. João e da Dona Maria. Casados por cerca de 50 anos, eles
-                construíram aqui a nossa família, com muito amor pelo campo: nasceu a filha Lúcia Helena e, mais tarde,
+                Há mais de 80 anos, esta terra é o lar do Sr. João e da Dona Maria de Lourdes. Casados por cerca de 60 anos, eles
+                construíram aqui a nossa família, com muito amor pelo campo: nasceu a filha Lucia e, mais tarde,
                 com a união ao Sebastião (o querido Tião), chegou a neta Gabrielle.
               </p>
               <figure>
                 <img
                   src="/historia-joao-maria.jpg"
-                  alt="Sr. João e Dona Maria"
+                  alt="Sr. João e Dona Maria de Lourdes"
                   loading="lazy"
                   className="w-full rounded-xl object-cover"
                 />
-                <figcaption className="mt-1 text-center text-xs text-earth-500">Sr. João e Dona Maria</figcaption>
+                <figcaption className="mt-1 text-center text-xs text-earth-500">Sr. João e Dona Maria de Lourdes</figcaption>
               </figure>
               <p>
                 Trabalhar a terra e acompanhar o ritmo da natureza sempre foi a nossa vocação, mas no coração pulsava um
@@ -166,11 +168,11 @@ export function PublicMenu() {
               <figure>
                 <img
                   src="/historia-lucia-tiao.jpg"
-                  alt="Lúcia Helena e Tião"
+                  alt="Lucia e Tião"
                   loading="lazy"
                   className="w-full rounded-xl object-cover"
                 />
-                <figcaption className="mt-1 text-center text-xs text-earth-500">Lúcia Helena e Tião</figcaption>
+                <figcaption className="mt-1 text-center text-xs text-earth-500">Lucia e Tião</figcaption>
               </figure>
               <p>
                 Projetamos cada cantinho para transmitir a paz e a calmaria do campo, um convite sincero para desacelerar
@@ -264,10 +266,20 @@ export function PublicMenu() {
                       ) : (
                         <>
                           <span className="flex w-14 shrink-0 justify-center">
-                            <Preco item={linha.unico ?? linha.pequeno} comMedida={!linha.unico} />
+                            <Preco
+                              item={linha.unico ?? linha.pequeno}
+                              comMedida={!linha.unico}
+                              rotulo={(linha.pequeno && pontosDe(linha.pequeno.nome)) || undefined}
+                              semMedida={!!linha.pequeno && !!pontosDe(linha.pequeno.nome)}
+                            />
                           </span>
                           <span className="flex w-14 shrink-0 justify-center">
-                            <Preco item={linha.grande} comMedida />
+                            <Preco
+                              item={linha.grande}
+                              comMedida
+                              rotulo={(linha.grande && pontosDe(linha.grande.nome)) || undefined}
+                              semMedida={!!linha.grande && !!pontosDe(linha.grande.nome)}
+                            />
                           </span>
                         </>
                       )}
