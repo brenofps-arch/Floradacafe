@@ -322,9 +322,15 @@ function Dashboard() {
     await loadAll()
   }
 
-  async function handleUploadMenuFoto(item: MenuItem, file: File) {
-    const url = await uploadMenuFoto(file, item.id)
-    const { error } = await supabase.from('menu_items').update({ foto_url: url }).eq('id', item.id)
+  async function handleUploadMenuFoto(itens: MenuItem[], file: File) {
+    const url = await uploadMenuFoto(file, itens[0].id)
+    const { error } = await supabase
+      .from('menu_items')
+      .update({ foto_url: url })
+      .in(
+        'id',
+        itens.map((i) => i.id),
+      )
     if (error) throw new Error(error.message)
     await loadAll()
   }
