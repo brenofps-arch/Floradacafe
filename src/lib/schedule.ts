@@ -9,12 +9,8 @@ export function isSaturday(isoDate: string) {
   return weekdayOf(isoDate) === 6
 }
 
-// Datas de sábado com exceção: funcionam também pela manhã (ex.: evento especial).
-const SABADOS_COM_MANHA = new Set(['2026-10-03'])
-
-export function allowedPeriodos(isoDate: string): Periodo[] {
-  if (!isSaturday(isoDate)) return ['manha', 'tarde']
-  return SABADOS_COM_MANHA.has(isoDate) ? ['manha', 'tarde'] : ['tarde']
+export function allowedPeriodos(_isoDate: string): Periodo[] {
+  return ['manha', 'tarde']
 }
 
 export function periodoLabel(periodo: Periodo) {
