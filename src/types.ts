@@ -73,14 +73,24 @@ export interface Profile {
   created_at: string
 }
 
+export type MenuCategoria = 'bebidas' | 'alcoolicas' | 'cafes'
+
+export const MENU_CATEGORIAS: { id: MenuCategoria; label: string }[] = [
+  { id: 'cafes', label: 'Cafés' },
+  { id: 'bebidas', label: 'Bebidas' },
+  { id: 'alcoolicas', label: 'Bebidas alcoólicas' },
+]
+
 export interface MenuItem {
   id: string
   nome: string
   valor: number
+  categoria: MenuCategoria | null
+  foto_url: string | null
   created_at: string
 }
 
-export type MenuItemInput = Pick<MenuItem, 'nome' | 'valor'>
+export type MenuItemInput = Pick<MenuItem, 'nome' | 'valor' | 'categoria'>
 
 export type AuditAction = 'insert' | 'update' | 'delete'
 

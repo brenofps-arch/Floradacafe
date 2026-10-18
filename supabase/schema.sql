@@ -264,3 +264,22 @@ create trigger bookings_audit_trigger
 -- Cardapio publico (pagina do QR code das mesas)
 create policy "Anon can view menu items"
   on public.menu_items for select to anon using (true);
+
+-- Categoria do produto no cardapio publico (NULL = nao aparece)
+alter table public.menu_items
+  add column if not exists categoria text check (categoria in ('bebidas', 'alcoolicas', 'cafes'));
+
+-- Foto do produto no cardapio publico
+alter table public.menu_items add column if not exists foto_url text;
+
+insert into storage.buckets (id, name, public)
+values ('cardapio', 'cardapio', true)
+on conflict (id) do nothing;
+
+create policy "Authenticated users can upload cardapio fotos"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'cardapio');
+
+create policy "Authenticated users can update cardapio fotos"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'cardapio');

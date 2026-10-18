@@ -1,24 +1,66 @@
 import { useState, type FormEvent } from 'react'
 import { formatBRL } from '../lib/format'
-import type { MenuItem } from '../types'
+import { MENU_CATEGORIAS, type MenuCategoria, type MenuItem } from '../types'
 
 interface Props {
   menuItems: MenuItem[]
-  onAdd: (nome: string, valor: number) => Promise<void>
-  onEdit: (item: MenuItem, nome: string, valor: number) => Promise<void>
+  onAdd: (nome: string, valor: number, categoria: MenuCategoria | null) => Promise<void>
+  onEdit: (item: MenuItem, nome: string, valor: number, categoria: MenuCategoria | null) => Promise<void>
+  onUploadFoto: (item: MenuItem, file: File) => Promise<void>
   onDelete: (item: MenuItem) => Promise<void>
   onClose: () => void
 }
 
-export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props) {
+function CategoriaSelect({
+  value,
+  onChange,
+}: {
+  value: MenuCategoria | ''
+  onChange: (v: MenuCategoria | '') => void
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as MenuCategoria | '')}
+      className="w-full rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
+    >
+      <option value="">Não mostrar no cardápio público</option>
+      {MENU_CATEGORIAS.map((c) => (
+        <option key={c.id} value={c.id}>
+          {c.label}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+export function MenuModal({ menuItems, onAdd, onEdit, onUploadFoto, onDelete, onClose }: Props) {
+  const [fotoUploadingId, setFotoUploadingId] = useState<string | null>(null)
+  const [fotoError, setFotoError] = useState<string | null>(null)
+
+  async function handleFoto(item: MenuItem, file: File | undefined) {
+    if (!file) return
+    setFotoError(null)
+    setFotoUploadingId(item.id)
+    try {
+      await onUploadFoto(item, file)
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Erro ao enviar a foto.')
+    } finally {
+      setFotoUploadingId(null)
+    }
+  }
+
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
+  const [categoria, setCategoria] = useState<MenuCategoria | ''>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editNome, setEditNome] = useState('')
   const [editValor, setEditValor] = useState('')
+  const [editCategoria, setEditCategoria] = useState<MenuCategoria | ''>('')
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -36,9 +78,10 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
     }
     setSaving(true)
     try {
-      await onAdd(nome.trim(), valorNum)
+      await onAdd(nome.trim(), valorNum, categoria || null)
       setNome('')
       setValor('')
+      setCategoria('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao adicionar produto.')
     } finally {
@@ -50,6 +93,7 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
     setEditingId(item.id)
     setEditNome(item.nome)
     setEditValor(item.valor.toFixed(2).replace('.', ','))
+    setEditCategoria(item.categoria ?? '')
     setEditError(null)
   }
 
@@ -66,7 +110,7 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
     }
     setEditSaving(true)
     try {
-      await onEdit(item, editNome.trim(), valorNum)
+      await onEdit(item, editNome.trim(), valorNum, editCategoria || null)
       setEditingId(null)
     } catch (err) {
       setEditError(err instanceof Error ? err.message : 'Erro ao editar produto.')
@@ -98,6 +142,9 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
                       className="w-24 rounded-lg border border-earth-200 bg-white px-2 py-1.5 text-sm focus:border-sun-500 focus:outline-none"
                     />
                   </div>
+                  <div className="mt-2">
+                    <CategoriaSelect value={editCategoria} onChange={setEditCategoria} />
+                  </div>
                   {editError && <p className="mt-1 text-xs text-red-600">{editError}</p>}
                   <div className="mt-2 flex justify-end gap-2">
                     <button
@@ -117,9 +164,34 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
                 </li>
               ) : (
                 <li key={item.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                  <span className="text-earth-900">{item.nome}</span>
+                  <span className="flex items-center gap-2 text-earth-900">
+                    {item.foto_url ? (
+                      <img src={item.foto_url} alt="" className="h-9 w-9 rounded-md object-cover" />
+                    ) : (
+                      <span className="h-9 w-9 rounded-md bg-earth-100" />
+                    )}
+                    <span>
+                    {item.nome}
+                    <span className="ml-2 text-xs text-earth-400">
+                      {MENU_CATEGORIAS.find((c) => c.id === item.categoria)?.label ?? 'oculto no público'}
+                    </span>
+                    </span>
+                  </span>
                   <div className="flex items-center gap-3">
                     <span className="text-earth-600">{formatBRL(item.valor)}</span>
+                    <label className="cursor-pointer text-xs font-medium text-earth-500 underline">
+                      {fotoUploadingId === item.id ? 'Enviando...' : item.foto_url ? 'Trocar foto' : 'Foto'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={fotoUploadingId === item.id}
+                        onChange={(e) => {
+                          void handleFoto(item, e.target.files?.[0])
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
                     <button
                       onClick={() => startEdit(item)}
                       className="text-xs font-medium text-earth-500 underline"
@@ -139,6 +211,7 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
           </ul>
         )}
 
+        {fotoError && <p className="mb-2 text-sm text-red-600">{fotoError}</p>}
         <p className="mb-3 text-xs text-earth-400">
           Alterar um produto aqui não muda os produtos já lançados em reservas anteriores — vale só a partir de agora.
         </p>
@@ -158,6 +231,7 @@ export function MenuModal({ menuItems, onAdd, onEdit, onDelete, onClose }: Props
             placeholder="Valor (R$)"
             className="w-full rounded-lg border border-earth-200 bg-white px-3 py-2 text-sm focus:border-sun-500 focus:outline-none"
           />
+          <CategoriaSelect value={categoria} onChange={setCategoria} />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"

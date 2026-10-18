@@ -13,7 +13,7 @@ import { RevenueDashboard } from './components/RevenueDashboard'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { displayNameFromEmail, formatDateDisplay } from './lib/format'
 import { totalPessoas } from './lib/schedule'
-import { uploadComprovante } from './lib/storage'
+import { uploadComprovante, uploadMenuFoto } from './lib/storage'
 import { supabase } from './lib/supabase'
 import type {
   AuditLogEntry,
@@ -22,6 +22,7 @@ import type {
   BookingItem,
   BookingPayment,
   FormaPagamento,
+  MenuCategoria,
   MenuItem,
   PricingSettings,
   Role,
@@ -292,14 +293,21 @@ function Dashboard() {
     await loadAll()
   }
 
-  async function handleAddMenuItem(nome: string, valor: number) {
-    const { error } = await supabase.from('menu_items').insert({ nome, valor })
+  async function handleAddMenuItem(nome: string, valor: number, categoria: MenuCategoria | null) {
+    const { error } = await supabase.from('menu_items').insert({ nome, valor, categoria })
     if (error) throw new Error(error.message)
     await loadAll()
   }
 
-  async function handleEditMenuItem(item: MenuItem, nome: string, valor: number) {
-    const { error } = await supabase.from('menu_items').update({ nome, valor }).eq('id', item.id)
+  async function handleEditMenuItem(item: MenuItem, nome: string, valor: number, categoria: MenuCategoria | null) {
+    const { error } = await supabase.from('menu_items').update({ nome, valor, categoria }).eq('id', item.id)
+    if (error) throw new Error(error.message)
+    await loadAll()
+  }
+
+  async function handleUploadMenuFoto(item: MenuItem, file: File) {
+    const url = await uploadMenuFoto(file, item.id)
+    const { error } = await supabase.from('menu_items').update({ foto_url: url }).eq('id', item.id)
     if (error) throw new Error(error.message)
     await loadAll()
   }
@@ -512,6 +520,7 @@ function Dashboard() {
           menuItems={menuItems}
           onAdd={handleAddMenuItem}
           onEdit={handleEditMenuItem}
+          onUploadFoto={handleUploadMenuFoto}
           onDelete={handleDeleteMenuItem}
           onClose={() => setShowMenu(false)}
         />
