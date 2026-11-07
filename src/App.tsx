@@ -69,7 +69,6 @@ function Dashboard() {
   })
 
   async function loadAll() {
-    setLoading(true)
     const [bookingsRes, itemsRes, paymentsRes, pricingRes, menuRes, profileRes] = await Promise.all([
       supabase.from('bookings').select('*').order('data_agendamento', { ascending: true }),
       supabase.from('booking_items').select('*'),
@@ -268,7 +267,8 @@ function Dashboard() {
   async function handleSavePricing(valorAdulto: number, valorCrianca: number) {
     const { error } = await supabase
       .from('settings')
-      .upsert({ id: 1, valor_adulto: valorAdulto, valor_crianca: valorCrianca })
+      .update({ valor_adulto: valorAdulto, valor_crianca: valorCrianca })
+      .eq('id', 1)
     if (error) throw new Error(error.message)
     await loadAll()
   }
