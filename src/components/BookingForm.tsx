@@ -78,10 +78,6 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', initialDat
       setError('Preencha nome e telefone.')
       return
     }
-    if (totalPessoas <= 0) {
-      setError('Informe ao menos 1 pessoa.')
-      return
-    }
     if (Number.isNaN(pago) || pago < 0) {
       setError('Informe um valor de entrada válido.')
       return
@@ -201,7 +197,7 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', initialDat
                   <label className="mb-1 block text-xs text-earth-600">Quantidade de pessoas</label>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     value={qtdPessoasExtra}
                     onChange={(e) => setQtdPessoasExtra(e.target.value)}
                     className="w-full rounded-lg border border-earth-200 bg-white px-2 py-2 text-sm focus:border-sun-500 focus:outline-none"
@@ -258,6 +254,11 @@ export function BookingForm({ pricing, bookings, variant = 'reserva', initialDat
                 <span className="text-earth-600">{totalPessoas} pessoa(s) no total</span>
                 <span className="font-semibold text-earth-900">{formatBRL(valorCalculado)}</span>
               </div>
+              {totalPessoas === 0 && (
+                <p className="mt-2 text-xs text-earth-500">
+                  Sem pessoas: serve para serviço avulso. O valor vem dos produtos lançados depois no botão "Produtos".
+                </p>
+              )}
             </div>
           )}
 

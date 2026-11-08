@@ -62,10 +62,6 @@ export function EditBookingModal({ booking, pricing, onSave, onClose }: Props) {
       setError('Preencha nome e telefone.')
       return
     }
-    if (totalPessoas <= 0) {
-      setError('Informe ao menos 1 pessoa.')
-      return
-    }
     const pago = Number(valorPago.replace(',', '.'))
     if (Number.isNaN(pago) || pago < 0) {
       setError('Informe um valor pago válido.')

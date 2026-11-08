@@ -90,13 +90,21 @@ export function BookingList({
             const pagoTotal = saldo <= 0.009
             const entradaEsperada = booking.valor_pessoas / 2
             const naoCompareceram = totalNaoCompareceram(booking)
-            const status = pagoTotal
-              ? { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
-              : booking.valor_pago <= 0.009
-                ? { label: 'Entrada não paga', classes: 'bg-red-100 text-red-700' }
-                : booking.valor_pago < entradaEsperada - 0.009
-                  ? { label: 'Entrada paga parcial', classes: 'bg-sun-100 text-sun-700' }
-                  : { label: 'Entrada paga', classes: 'bg-sun-200 text-sun-800' }
+            const semValor = total <= 0.009 && booking.valor_pago <= 0.009
+            const semEntrada = booking.valor_pessoas <= 0.009
+            const status = semValor
+              ? { label: 'Sem valor lançado', classes: 'bg-earth-100 text-earth-600' }
+              : pagoTotal
+                ? { label: 'Pago total', classes: 'bg-field-100 text-field-700' }
+                : semEntrada
+                  ? booking.valor_pago <= 0.009
+                    ? { label: 'A pagar', classes: 'bg-red-100 text-red-700' }
+                    : { label: 'Pago parcial', classes: 'bg-sun-100 text-sun-700' }
+                  : booking.valor_pago <= 0.009
+                    ? { label: 'Entrada não paga', classes: 'bg-red-100 text-red-700' }
+                    : booking.valor_pago < entradaEsperada - 0.009
+                      ? { label: 'Entrada paga parcial', classes: 'bg-sun-100 text-sun-700' }
+                      : { label: 'Entrada paga', classes: 'bg-sun-200 text-sun-800' }
             const totalPessoas = booking.qtd_adultos + booking.qtd_criancas + booking.qtd_gratuitos
             const itensTotal = itemsTotalByBooking[booking.id] ?? 0
             return (
